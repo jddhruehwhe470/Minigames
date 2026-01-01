@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎡 Roll Stars - Telegram</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        /* Шапка */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(90deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stars-balance {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid #FFD700;
+            border-radius: 20px;
+            padding: 8px 15px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        /* Колесо */
+        .wheel-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 30px auto;
+        }
+        
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 0deg,
+                #FF6B6B 0deg 45deg,
+                #4ECDC4 45deg 90deg,
+                #FFD166 90deg 135deg,
+                #06D6A0 135deg 180deg,
+                #118AB2 180deg 225deg,
+                #7209B7 225deg 270deg,
+                #F72585 270deg 315deg,
+                #FF9E00 315deg 360deg
+            );
+            position: relative;
+            transition: transform 3s cubic-bezier(0.2, 0.8, 0.3, 1);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.7);
+            border: 8px solid #1a1a2e;
+        }
+        
+        .wheel-pointer {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 50px;
+            background: #FFD700;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            z-index: 10;
+            filter: drop-shadow(0 0 15px gold);
+        }
+        
+        .wheel-item {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            top: 20px;
+            left: 130px;
+            transform-origin: 50% 130px;
+            text-align: center;
+            font-size: 24px;
+        }
+        
+        /* Кнопка вращения */
+        .spin-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 25px;
+            margin: 30px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .spin-cost {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+        
+        .spin-button {
+            background: linear-gradient(90deg, #FF416C, #FF4B2B);
+            border: none;
+            color: white;
+            width: 100%;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(255, 65, 108, 0.4);
+        }
+        
+        .spin-button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(255, 65, 108, 0.6);
+        }
+        
+        .spin-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Возможные призы */
+        .prizes-section {
+            text-align: left;
+            margin-top: 30px;
+        }
+        
+        .prizes-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #FFD700;
+        }
+        
+        .prizes-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .prize-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .prize-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-5px);
+        }
+        
+        .prize-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .prize-name {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        
+        .prize-value {
+            font-size: 11px;
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        /* Навигация */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        .nav-button {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        
+        .nav-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Уведомление */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from { top: -100px; }
+            to { top: 20px; }
+        }
+        
+        /* Результат */
+        .result-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .result-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 350px;
+            width: 90%;
+            border: 2px solid #FFD700;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.3);
+        }
+        
+        .result-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .result-title {
+            font-size: 24px;
+            color: #FFD700;
+            margin-bottom: 10px;
+        }
+        
+        .result-description {
+            opacity: 0.8;
+            margin-bottom: 20px;
+        }
+        
+        .result-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .result-button {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .result-button.primary {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .result-button.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Шапка -->
+        <div class="header">
+            <div class="logo">🎡 ROLL STARS</div>
+            <div class="stars-balance">
+                <span id="starsCount">150</span> ★
+            </div>
+        </div>
+        
+        <!-- Колесо -->
+        <div class="wheel-container">
+            <div class="wheel-pointer"></div>
+            <div class="wheel" id="wheel">
+                <!-- Сектора будут добавлены через JS -->
+            </div>
+        </div>
+        
+        <!-- Секция вращения -->
+        <div class="spin-section">
+            <div class="spin-cost">Ролл за 50 ★</div>
+            <button class="spin-button" id="spinButton" onclick="spinWheel()">
+                🎡 КРУТИТЬ
+            </button>
+        </div>
+        
+        <!-- Возможные призы -->
+        <div class="prizes-section">
+            <div class="prizes-title">ВОЗМОЖНЫЕ ПРИЗЫ</div>
+            <div class="prizes-grid" id="prizesGrid">
+                <!-- Призы будут добавлены через JS -->
+            </div>
+        </div>
+        
+        <!-- Навигация -->
+        <div class="nav-buttons">
+            <button class="nav-button" onclick="window.location.href='index.html'">
+                🏠 Главная
+            </button>
+            <button class="nav-button" onclick="window.location.href='inventory.html'">
+                🎒 Инвентарь (<span id="inventoryCount">0</span>)
+            </button>
+        </div>
+    </div>
+    
+    <!-- Уведомление -->
+    <div class="notification" id="notification"></div>
+    
+    <!-- Модалка результата -->
+    <div class="result-modal" id="resultModal">
+        <div class="result-content">
+            <div class="result-icon" id="resultIcon">🎁</div>
+            <h2 class="result-title" id="resultTitle">ВЫ ВЫИГРАЛИ!</h2>
+            <div class="result-description" id="resultDescription">
+                Редкий NFT подарок добавлен в ваш инвентарь
+            </div>
+            <div class="result-actions">
+                <button class="result-button primary" onclick="addToInventory()">
+                    Взять в инвентарь
+                </button>
+                <button class="result-button secondary" onclick="closeResult()">
+                    Продать за <span id="sellPrice">0</span> ★
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="game-data.js"></script>
+    <script src="game.js"></script>
+    <script>
+        // Инициализация Telegram
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+        
+        // Показать имя пользователя если есть
+        if (tg.initDataUnsafe.user) {
+            const user = tg.initDataUnsafe.user;
+            // Можно сохранить в игре
+        }
+    </script>
+</body>
+  </html>
